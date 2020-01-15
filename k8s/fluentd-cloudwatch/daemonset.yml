@@ -1,0 +1,51 @@
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: fluentd
+  namespace: kube-system
+  labels:
+    k8s-app: fluentd-logging
+spec:
+  template:
+    metadata:
+      annotations:
+        iam.amazonaws.com/role: KubernetesAssumeCloudWatchLogger
+      labels:
+        k8s-app: fluentd-logging
+    spec:
+      serviceAccountName: fluentd
+      containers:
+      - name: fluentd
+        image: fluent/fluentd-kubernetes-daemonset:v1.3.3-debian-cloudwatch-1.0@sha256:17398121d3cc240e555de2330f2a9c4ec2667300f633fd580b645e9cacd747c5
+        env:
+          - name: AWS_REGION
+            value: "eu-west-1"
+          - name: FLUENTD_CONF
+            value: "override/fluent.conf"
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: fluentd-config
+          mountPath: /fluentd/etc/override
+          readOnly: true
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: fluentd-config
+        configMap:
+          name: fluentd-config
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers

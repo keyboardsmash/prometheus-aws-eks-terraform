@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: etcd
+  namespace: traefik
+spec:
+  selector:
+    etcd_cluster: traefik-etcd-cluster
+    app: etcd
+  ports:
+    - protocol: TCP
+      port: 2379
+      targetPort: 2379

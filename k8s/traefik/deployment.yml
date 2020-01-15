@@ -1,0 +1,60 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: traefik
+  namespace: traefik
+  labels:
+    app: traefik
+spec:
+  selector:
+    matchLabels:
+      app: traefik
+      service: traefik
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: traefik
+        service: traefik
+    spec:
+      serviceAccountName: traefik
+      terminationGracePeriodSeconds: 60
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app: traefik
+                  service: traefik
+              namespaces:
+                - traefik
+      volumes:
+        - name: client-cert
+          secret:
+            secretName: client-cert
+      containers:
+        - image: traefik@sha256:f2566c50f26be475c4b6aef803662b1809c721cec398899172bf604277f56fda # 1.7.10
+          name: traefik
+          ports:
+            - name: http
+              containerPort: 80
+            - name: https
+              containerPort: 443
+            - name: admin
+              containerPort: 8080
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+          volumeMounts:
+            - name: client-cert
+              mountPath: /tls/client-certificate
+          args:
+            - --api
+            - --kubernetes
+            - --etcd
+            - --etcd.endpoint=etcd:2379
+            - --etcd.useAPIV3=true

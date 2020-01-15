@@ -1,0 +1,48 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: prometheus-operator
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/version: v0.30.1
+  name: prometheus-operator
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus-operator
+      app.kubernetes.io/component: controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: prometheus-operator
+        app.kubernetes.io/component: controller
+        app.kubernetes.io/version: v0.30.1
+    spec:
+      containers:
+        - args:
+            - --kubelet-service=kube-system/kubelet
+            - --logtostderr=true
+            - --config-reloader-image=quay.io/coreos/configmap-reload@sha256:2b0496d039d8a9ee0777a59537f1daf4be13ab215bbefbdf27c897fc5c182384 # v0.0.1
+            - --prometheus-config-reloader=quay.io/coreos/prometheus-config-reloader@sha256:099b3614dbcfeb6d2c1b4488bf6d84b00118803266a5c89857d4245471855c11 #v0.30.1
+          image: quay.io/coreos/prometheus-operator@sha256:aa495b138ede28ca8952b630e5524cc18e9e21835a7d9c1bab31097650c8425b #v0.29.0
+          name: prometheus-operator
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            limits:
+              cpu: 200m
+              memory: 200Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      serviceAccountName: prometheus-operator
+

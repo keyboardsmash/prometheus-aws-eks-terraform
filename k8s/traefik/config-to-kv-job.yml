@@ -1,0 +1,33 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: update-traefik-config
+  namespace: traefik
+  labels:
+    app: traefik
+spec:
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 1
+  schedule: "15 14 * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: traefik
+        spec:
+          volumes:
+            - name: config
+              configMap:
+                name: traefik-conf
+          containers:
+            - name: set-up-etcd-config
+              image: traefik@sha256:f2566c50f26be475c4b6aef803662b1809c721cec398899172bf604277f56fda # 1.7.10
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+              args:
+                - storeconfig
+                - --configfile=/config/traefik.toml
+          restartPolicy: Never
+

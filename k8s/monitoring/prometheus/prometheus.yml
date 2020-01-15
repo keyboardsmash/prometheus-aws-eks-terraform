@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  serviceAccountName: prometheus
+  serviceMonitorSelector: {} # Get all serviceMonitors.
+  serviceMonitorNamespaceSelector: {} # Search all namespaces
+  retention: 336h
+  resources:
+    requests:
+      memory: 400Mi
+  enableAdminAPI: false
+  securityContext:
+    runAsUser: 1000
+    runAsNonRoot: true
+    fsGroup: 2000
+  storage:
+    volumeClaimTemplate:
+      spec:
+        storageClassName: gp2
+        resources:
+          requests:
+            storage: 100Gi
